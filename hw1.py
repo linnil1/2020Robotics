@@ -12,10 +12,10 @@ print("pairwise multiply")
 print(a * b)
 
 print("dot")
-print(np.dot(a, b)) 
+print(np.dot(a, b))
 
 print("cross product")
-print(np.cross(a, b)) 
+print(np.cross(a, b))
 
 print("transpose")
 print(a.T, b.T)
@@ -26,7 +26,7 @@ print(s)
 
 # eigen decomposition
 print("eigen decomposition")
-e_value, e_vector= np.linalg.eig(s)
+e_value, e_vector = np.linalg.eig(s)
 print(e_vector)
 print("And it's correspoding value")
 print(e_value)

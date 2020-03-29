@@ -6,12 +6,15 @@ np.set_printoptions(3, suppress=True)
 class Base:
     def __init__(self, n=3, mat=None):
         if mat is not None:
-            self.mat = mat
+            self.mat = np.array(mat)
             return
         self.mat = np.identity(n)
 
     def __str__(self):
         return f"{self.mat}"
+
+    def norm(self):
+        return np.sqrt(np.sum(self.mat ** 2))
 
 
 class Rotation(Base):
@@ -43,7 +46,7 @@ class Rotation(Base):
         cb = np.cos(b)
         a = np.arctan2(v[1, 0] / cb, v[0, 0] / cb)
         r = np.arctan2(v[2, 1] / cb, v[2, 2] / cb)
-        return a / np.pi * 180, b / np.pi * 180, r / np.pi * 180 
+        return a / np.pi * 180, b / np.pi * 180, r / np.pi * 180
 
     def getZYZ(self):
         """ Get a, b, r from Eulur zyz """
@@ -97,55 +100,52 @@ class Transform(Base):
         return Transform(mat=self.mat.dot(other.mat))
 
 
+if __name__ == "__main__":
+    # Q5
+    print("Q5")
+    print(Transform(rot=Rotation(30, 2), loc=Translation(0, 0, 0)) * Translation(10, 20, 30))
+    print(Transform(rot=Rotation(30, 2), loc=Translation(11, -3, 9)) * Translation(10, 20, 30))
+    print(Transform(rot=Rotation(30, 2), loc=Translation(11, -3, 9)).T())
 
-# exit()
+    # Q3
+    print("Q3")
+    print(Rotation(45, 0) * Rotation(30, 2))
 
-# Q5
-print("Q5")
-print(Transform(rot=Rotation(30, 2), loc=Translation(0, 0, 0)) * Translation(10, 20, 30))
-print(Transform(rot=Rotation(30, 2), loc=Translation(11,-3, 9)) * Translation(10, 20, 30))
-print(Transform(rot=Rotation(30, 2), loc=Translation(11,-3, 9)).T())
+    # Q6
+    print("Q6")
+    Tab = Transform(rot=Rotation(180, 2), loc=Translation(3, 0, 0))
+    Tbc = Transform(rot=Rotation(90, 1) * Rotation(150, 0), loc=Translation(0, 0, 2))
+    print("Tab", Tab)
+    print("Tbc", Tbc)
+    print("Tac", (Tab * Tbc))
+    print("Tba", Tab.T())
+    print("Tcb", Tbc.T())
+    print("Tca", (Tab * Tbc).T())
 
-# Q3
-print("Q3")
-print(Rotation(45, 0) * Rotation(30, 2))
+    # Q8
+    print("Q8")
+    rot = Rotation(mat=np.matrix("0.866 -0.5 0; 0.433 0.75 -0.5; 0.25 0.433 0.866"))
+    a, b, r = rot.getXYZ()
+    print(rot)
+    print("XYZ or ZYX abr:", a, b, r)
+    print(Rotation(r, 2) * Rotation(b, 1) * Rotation(a, 0))
+    print("ZYZ abr:", *rot.getZYZ())
 
-# Q6
-print("Q6")
-Tab = Transform(rot=Rotation(180, 2), loc=Translation(3, 0, 0))
-Tbc = Transform(rot=Rotation(90, 1) * Rotation(150, 0), loc=Translation(0, 0, 2))
-print("Tab", Tab)
-print("Tbc", Tbc)
-print("Tac", (Tab * Tbc))
-print("Tba", Tab.T())
-print("Tcb", Tbc.T())
-print("Tca", (Tab * Tbc).T())
+    # Q9
+    th = 40 / 2 / 180 * np.pi
+    e = [0, 1 / np.sqrt(2) * np.sin(th), 1 / np.sqrt(2) * np.sin(th), 0, np.cos(th)]
+    R = np.array([
+        [1 - 2*e[2]**2 - 2*e[3]**2, 2*(e[1]*e[2] - e[3]*e[4]), 2*(e[1]*e[3] + e[2]*e[4])],
+        [2*(e[1]*e[2] + e[3]*e[4]), 1 - 2*e[1]**2 - 2*e[3]**2, 2*(e[2]*e[3] - e[1]*e[4])],
+        [2*(e[1]*e[3] - e[2]*e[4]), 2*(e[1]*e[4] + e[2]*e[3]), 1 - 2*e[1]**2 - 2*e[2]**2]])
+    print("Q9")
+    print(R)
+    p = Rotation(30, 0) * Rotation(20, 1) * Rotation(10, 0) * Rotation(mat=R)
+    print(p)
+    print(p.getXYZ())
 
-
-# Q8
-print("Q8")
-rot = Rotation(mat=np.matrix("0.866 -0.5 0; 0.433 0.75 -0.5; 0.25 0.433 0.866"))
-a, b, r = rot.getXYZ()
-print(rot)
-print("XYZ or ZYX abr:", a, b, r)
-print(Rotation(r, 2) * Rotation(b, 1) * Rotation(a, 0))
-print("ZYZ abr:", *rot.getZYZ())
-
-# Q9
-th = 40 / 2 / 180 * np.pi
-e = [0, 1 / np.sqrt(2) * np.sin(th), 1 / np.sqrt(2) * np.sin(th), 0, np.cos(th)]
-R = np.array([
-    [1 - 2*e[2]**2 - 2*e[3]**2, 2*(e[1]*e[2] - e[3]*e[4]), 2*(e[1]*e[3] + e[2]*e[4])],
-    [2*(e[1]*e[2] + e[3]*e[4]), 1 - 2*e[1]**2 - 2*e[3]**2, 2*(e[2]*e[3] - e[1]*e[4])],
-    [2*(e[1]*e[3] - e[2]*e[4]), 2*(e[1]*e[4] + e[2]*e[3]), 1 - 2*e[1]**2 - 2*e[2]**2]])
-print("Q9")
-print(R)
-p = Rotation(30, 0) * Rotation(20, 1) * Rotation(10, 0) * Rotation(mat=R)
-print(p)
-print(p.getXYZ())
-
-# Q10
-print("Q10")
-a = Transform(mat=np.matrix("0 1 0 1; 1 0 0 10; 0 0 -1 9; 0 0 0 1"))
-b = Transform(mat=np.matrix("1 0 0 -10; 0 -1 0 20; 0 0 -1 10; 0 0 0 1"))
-print(b.T() * a)
+    # Q10
+    print("Q10")
+    a = Transform(mat=np.matrix("0 1 0 1; 1 0 0 10; 0 0 -1 9; 0 0 0 1"))
+    b = Transform(mat=np.matrix("1 0 0 -10; 0 -1 0 20; 0 0 -1 10; 0 0 0 1"))
+    print(b.T() * a)

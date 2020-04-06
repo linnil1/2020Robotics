@@ -1,6 +1,7 @@
 import numpy as np
 from hw2 import Transform, Translation, Rotation, Base
 import scipy.io
+import sympy
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -125,19 +126,80 @@ def findTransform(r1, r2):
     return transform
 
 
+def link(twist, dist, angle, offset):
+    T1 = Transform(rot=Rotation(twist, 0))
+    T2 = Transform(loc=Translation(dist, 0, 0))
+    T3 = Transform(rot=Rotation(angle, 2))
+    T4 = Transform(loc=Translation(0, 0, offset))
+    return T1 * T2 * T3 * T4
+
+
+def symLink(twist, dist, angle, offset):
+    twist = twist * sympy.pi / 180
+    T1 = sympy.Matrix([
+        [1, 0, 0, dist],
+        [0, sympy.cos(twist), -sympy.sin(twist), 0],
+        [0, sympy.sin(twist),  sympy.cos(twist), 0],
+        [0, 0, 0, 1]])
+    # T1[sympy.abs(T1) < 1e-3] = 0
+    T2 = sympy.Matrix([
+        [sympy.cos(angle), -sympy.sin(angle), 0, 0],
+        [sympy.sin(angle),  sympy.cos(angle), 0, 0],
+        [0, 0, 1, offset],
+        [0, 0, 0, 1]])
+    return T1 * T2
+
+
+def inv(T):
+    T = T.copy()
+    T[:3, :3] = T[:3, :3].T
+    T[:3, 3] = -T[:3, :3] * T[:3, 3]
+    return T
+
+
 if __name__ == "__main__":
+    # Q1
+    print("Q1")
+    t = Transform(rot=Rotation(30, 2), loc=Translation(10, 0, 5)).T()
+    print(t)
+    print(t.rot * Translation(0, 2, -3))
+    print(t.rot * Translation(1.414, 1.414, 0))
+
+    # Q2
+    print("Q2")
+    th1, th2, th3 =  0, 0, 0
+    for th1, th2, th3 in [[0,0,0], [10,20,30], [90,90,90]]:
+        print(th1, th2, th3)
+        T1 = link(0, 0, th1, 0)
+        T2 = link(0, 4, th2, 0)
+        T3 = link(0, 3, th3, 0)
+        T4 = link(0, 2, 0  , 0)
+        th1, th2, th3 =  90, 90, 90
+        print(T1 * T2 * T3)
+        print(T1 * T2 * T3 * T4)
+
+    th1, th2, th3 = sympy.symbols("t1, t2, t3")
+    T1 = symLink(0, 0, th1, 0)
+    T2 = symLink(0, 4, th2, 0)
+    T3 = symLink(0, 3, th3, 0)
+    T4 = symLink(0, 2, 0  , 0)
+    print(T1 * T2 * T3)
+    print(T1 * T2 * T3 * T4)
+
+    # Q6
+    print("Q6")
     data = scipy.io.loadmat('hw3-data.mat')
     r1 = data['r1']
     r2 = data['r2']
     transform = findTransform(r1, r2)
 
-    # diff r1 r2
+    ## diff r1 r2
     r2_new = transform.mat.dot(np.vstack([r2, np.ones([1, r2.shape[1]])]))[:3]
     print("r1", r1)
     print("r2", r2_new)
     print(((r1 - r2_new) ** 2).sum(axis=0).mean())
 
-    # plot
+    ## plot
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(r1[0, :],     r1[1, :],     r1[2, :],     marker='o')

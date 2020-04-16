@@ -16,6 +16,9 @@ class Base:
     def norm(self):
         return np.sqrt(np.sum(self.mat ** 2))
 
+    def __add__(self, other):
+        return self.__class__(mat=self.mat + other.mat)
+
 
 class Rotation(Base):
     """ Rotation matrix """
@@ -39,6 +42,10 @@ class Rotation(Base):
     def __mul__(self, other):
         return Rotation(mat=self.mat.dot(other.mat))
 
+    def T(self):
+        """ Inverse """
+        return Rotation(mat=np.linalg.inv(self.mat))
+
     def getXYZ(self):
         """ Get a, b, r from fixed xyz or eulur zyx """
         v = self.mat
@@ -51,7 +58,7 @@ class Rotation(Base):
     def getZYZ(self):
         """ Get a, b, r from Eulur zyz """
         v = self.mat
-        b = np.arctan2(v[2, 0], np.sqrt(v[2, 1] ** 2 + v[2, 2] ** 2))
+        b = np.arctan2(np.sqrt(v[2, 0] ** 2 + v[2, 1] ** 2), v[2, 2])
         sb = np.sin(b)
         a = np.arctan2(v[1, 2] / sb,  v[0, 2] / sb)
         r = np.arctan2(v[2, 1] / sb, -v[2, 0] / sb)
@@ -63,7 +70,6 @@ class Translation(Base):
     def __init__(self, x=0, y=0, z=0, mat=None):
         if mat is not None:
             super().__init__(mat=mat)
-            self.mat = mat
             return
         self.mat = np.array([x, y, z])
 
@@ -81,14 +87,13 @@ class Transform(Base):
             super().__init__(4)
         else:
             super().__init__(mat=mat)
-            self.mat = mat
             rot = Rotation(mat=mat[:3, :3])
             loc = Translation(mat=mat[0:3, 3])
 
         self.rot = rot
         self.mat[0:3, 0:3] = rot.mat
         self.loc = loc
-        self.mat[0:3, 3] = loc.mat
+        self.mat[0:3, 3] = loc.mat.reshape(self.mat[0:3 ,0].shape)
 
     def T(self):
         """ Inverse """
@@ -97,19 +102,21 @@ class Transform(Base):
     def __mul__(self, other):
         if other.mat.shape[0] != self.mat.shape[0]:
             return NotImplemented
+        if type(other) is not Transform:
+            return NotImplemented
         return Transform(mat=self.mat.dot(other.mat))
 
 
 if __name__ == "__main__":
+    # Q3
+    print("Q3")
+    print(Rotation(30, 2) * Rotation(45, 0))
+
     # Q5
     print("Q5")
     print(Transform(rot=Rotation(30, 2), loc=Translation(0, 0, 0)) * Translation(10, 20, 30))
     print(Transform(rot=Rotation(30, 2), loc=Translation(11, -3, 9)) * Translation(10, 20, 30))
     print(Transform(rot=Rotation(30, 2), loc=Translation(11, -3, 9)).T())
-
-    # Q3
-    print("Q3")
-    print(Rotation(45, 0) * Rotation(30, 2))
 
     # Q6
     print("Q6")
@@ -128,8 +135,10 @@ if __name__ == "__main__":
     a, b, r = rot.getXYZ()
     print(rot)
     print("XYZ or ZYX abr:", a, b, r)
-    print(Rotation(r, 2) * Rotation(b, 1) * Rotation(a, 0))
-    print("ZYZ abr:", *rot.getZYZ())
+    print(Rotation(a, 2) * Rotation(b, 1) * Rotation(r, 0))
+    a, b, r = rot.getZYZ()
+    print("ZYZ abr:", a, b, r)
+    print(Rotation(a, 2) * Rotation(b, 1) * Rotation(r, 2))
 
     # Q9
     th = 40 / 2 / 180 * np.pi
@@ -140,7 +149,7 @@ if __name__ == "__main__":
         [2*(e[1]*e[3] - e[2]*e[4]), 2*(e[1]*e[4] + e[2]*e[3]), 1 - 2*e[1]**2 - 2*e[2]**2]])
     print("Q9")
     print(R)
-    p = Rotation(30, 0) * Rotation(20, 1) * Rotation(10, 0) * Rotation(mat=R)
+    p = Rotation(30, 2) * Rotation(20, 1) * Rotation(10, 0) * Rotation(mat=R)
     print(p)
     print(p.getXYZ())
 

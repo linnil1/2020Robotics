@@ -26,14 +26,14 @@ def tensorLink(twist, dist, angle, offset):
     return torch.mm(T1, T2)
 
 
-def gradientVariable(wanted, linkparam, init_angle=None):
+def gradientVariable(wanted, linkparam, init_angle=None, iters=500):
     """
     Use gradient descent to find parameters
     Unknown parameters are setted to None.
     Assume no two parameters exist at the same link
     """
     # init tensor
-    n = np.sum([p[2] == None or p[3] == None for p in linkparam])
+    n = np.sum([p[2] is None or p[3] is None for p in linkparam])
     if init_angle is None:
         th = torch.rand((n), requires_grad=True)
     else:
@@ -42,17 +42,17 @@ def gradientVariable(wanted, linkparam, init_angle=None):
     optimizer = torch.optim.Adam([th], lr=0.2)
 
     # gradient decent
-    for epoch in range(500):
+    for epoch in range(iters):
         optimizer.zero_grad()
 
         # forward the kinematic matrix
         T = torch.Tensor(np.identity(4))
         i = 0
         for p in linkparam:
-            if p[2] == None:
+            if p[2] is None:
                 T = torch.mm(T, tensorLink(p[0], p[1], th[i], p[3]))
                 i += 1
-            elif p[3] == None:
+            elif p[3] is None:
                 T = torch.mm(T, tensorLink(p[0], p[1], p[2], th[i]))
                 i += 1
             else:
@@ -78,10 +78,10 @@ def forwardVariable(th, linkparam):
     T = Transform()
     i = 0
     for p in linkparam:
-        if p[2] == None:
+        if p[2] is None:
             T = T * link(p[0], p[1], th[i], p[3])
             i += 1
-        elif p[3] == None:
+        elif p[3] is None:
             T = T * link(p[0], p[1], p[2], th[i])
             i += 1
         else:

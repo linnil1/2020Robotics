@@ -14,9 +14,10 @@ class Simulation:
         self.poses = []
         self.dirs = []
         self.trans = []
+        self.text = []
         self.linkparam = linkparam
 
-    def initPlot(self, title):
+    def initPlot(self, title=''):
         plt.cla()
         limit = self.limit
         self.ax.set_xlim3d([-limit, limit])
@@ -27,7 +28,7 @@ class Simulation:
         self.ax.set_zlabel('Z')
         plt.title(title)
 
-    def sim(self, th):
+    def sim(self, th, text=""):
         # init
         trans = [Transform()]
         pos = [Translation()]
@@ -45,6 +46,7 @@ class Simulation:
         self.trans.append(trans)
         self.poses.append(np.array([p.mat for p in pos]))
         self.dirs.append(dirs)
+        self.text.append(text)
 
     def showPos(self, frame, poses, dirs):
         self.initPlot(str(frame))
@@ -72,15 +74,20 @@ class Simulation:
                        dirs[:, 0, 2], dirs[:, 1, 2], dirs[:, 2, 2],
                        color='orange')
 
-    def runAnimation(self, repeat=True):
+        # text
+        self.ax.text2D(0.1, 0.9, self.text[frame],
+                       transform=self.ax.transAxes)
+
+    def runAnimation(self, repeat=True, show=True):
         line_ani = animation.FuncAnimation(self.fig,
                                            self.showPos,
                                            len(self.poses),
                                            fargs=(self.poses, self.dirs),
                                            interval=100,
-                                           #blit=False,
                                            repeat=repeat)
-        plt.show()
+        if show:
+            plt.show()
+        return line_ani
 
 
 if __name__ == "__main__":

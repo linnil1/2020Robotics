@@ -72,12 +72,14 @@ class Simulation:
                        dirs[:, 0, 2], dirs[:, 1, 2], dirs[:, 2, 2],
                        color='orange')
 
-    def runAnimation(self):
+    def runAnimation(self, repeat=True):
         line_ani = animation.FuncAnimation(self.fig,
                                            self.showPos,
                                            len(self.poses),
                                            fargs=(self.poses, self.dirs),
-                                           interval=100, blit=False)
+                                           interval=100,
+                                           #blit=False,
+                                           repeat=repeat)
         plt.show()
 
 

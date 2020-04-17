@@ -32,6 +32,17 @@ class Quaternion(Base):
             [q[2],  q[3],  q[0], -q[1]],
             [q[3], -q[2],  q[1],  q[0]]])
 
+    @classmethod
+    def fromRotationMat(cls, rot):
+        """ Input from matrix """
+        r = rot.mat
+        angle = np.arccos((np.trace(r) - 1) / 2)
+        raxis = 1 / 2 / np.sin(angle) * np.array([
+            r[2,1] - r[1,2],
+            r[0,2] - r[2,0],
+            r[1,0] - r[0,1]])
+        return cls.setRotation(angle / np.pi * 180, raxis)
+
     def getRotationParam(self):
         """ Rotation based on [x, y, z] with theta """
         q = self.mat / self.norm()

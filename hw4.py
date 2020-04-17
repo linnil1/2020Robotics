@@ -8,12 +8,14 @@ sin, cos = np.sin, np.cos
 
 
 def vTranslate(v=Translation(), w=Translation(), mat=None):
+    """ vector of velcoity and angular """
     if mat is not None:
         return Translation(mat=mat)
     return Translation(mat=np.hstack([v.mat, w.mat]))
 
 
 def vTransform(rot, p_rel=Translation()):
+    """ matrix of velcoity and angular """
     p = p_rel.mat
     if type(rot) is not Rotation:
         raise ValueError("Wrong Rotation")

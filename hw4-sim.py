@@ -35,4 +35,4 @@ for i in np.arange(0, 5.01, interval):
     th = th + dth * interval
     sim.sim(np.array([*(th / np.pi * 180), 0]))
 
-sim.runAnimation()
+sim.runAnimation(repeat=False)

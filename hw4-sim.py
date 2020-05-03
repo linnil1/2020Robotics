@@ -22,7 +22,7 @@ def customJ(th):
 
 
 # init
-sim = Simulation(linkparam, 4)
+sim = Simulation(linkparam, 8)
 th = np.array([10, 20, 30]) / 180 * np.pi
 dxy = np.array([.2, -.3, -.2])
 interval = 0.1
@@ -35,4 +35,4 @@ for i in np.arange(0, 5.01, interval):
     th = th + dth * interval
     sim.sim(np.array([*(th / np.pi * 180), 0]))
 
-sim.runAnimation(repeat=False)
+sim.runAnimation(repeat=True)

@@ -1,14 +1,11 @@
 import numpy as np
-from hw2 import Transform, Translation, Rotation, Base
-from hw3 import Quaternion, link
-from hw4 import vTransform, vTranslate
+from utils import Transform, Translation, Rotation, Quaternion, link, vTransform, vTranslate
 import matplotlib.pyplot as plt
 from pprint import pprint
 
 sin, cos = np.sin, np.cos
 
 # The arm setting
-"""
 check = True
 linkparam = [[ 0,   0, None, 0],
              [ 0,  30, None, 0],
@@ -21,6 +18,7 @@ M = [0, 0.1, 0.2]
 I = [0, 0, 0]
 C = [[0, 0, 0], [30, 0, 0], [20, 0, 0]]
 
+"""
 check = True
 linkparam = [[ 0,   0, None, 0],
              [ 0,  3.0, None, 0],
@@ -33,7 +31,6 @@ M = [0, 0.3, 0.1]
 I = [0, 0, 0]
 C = [[0, 0, 0], [3, 0, 0], [4, 0, 0]]
 
-"""
 check = False
 linkparam = [[ 0,    0, None, 0],
              [ 0,  0.5, None, 0],
@@ -46,6 +43,7 @@ ath = [0.5, 1, 1.5, 0]
 M = [0, 4.6, 2.3, 1]
 I = [0, 0, 0, [[0.5, 0, 0], [0, 0.1, 0], [0, 0, 0.1]]]
 C = [[0, 0, 0], [0.5, 0, 0], [0.5, 0, 0], [0, 0, 0]]
+"""
 
 # Result
 Trans = [Transform()]

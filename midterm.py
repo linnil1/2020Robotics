@@ -59,7 +59,7 @@ t_bc = Transform(rot=Rotation(90, 0), loc=Translation(0, 100, 100))
 t_bp = t_bc * t_cf * t_fp
 print("t_bp", t_bp)
 
-linkparam = [(90,   0, 90,  20),
+linkparam = [(90,   0, 90,   0),
              ( 0,  20, None, 0),
              ( 0, 100, None, 0),
              ( 0, 100, None, 0),

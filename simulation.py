@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from hw2 import Transform, Translation, Rotation, Base
-from hw3 import link
+from utils import Transform, Translation, link
 import mpl_toolkits.mplot3d.axes3d as p3
 import matplotlib.animation as animation
 

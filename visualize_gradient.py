@@ -55,12 +55,12 @@ def gradientVariable(wanted, linkparam, init_angle=None):
 
         # calculate loss and back propagation
         loss = torch.mean((T[:3, :3] - wanted[:3, :3]) ** 2) * 1 + \
-               torch.mean((T[:, 3] - wanted[:, 3]) ** 2) * 0.001
+               torch.mean((T[:, 3] - wanted[:, 3]) ** 2) * 0.0001
         loss.backward()
         optimizer.step()
 
         # show the training status
-        if loss <= pre_loss and pre_loss - loss < 1e-7:
+        if loss <= pre_loss and pre_loss - loss < 1e-8:
             break
         pre_loss = loss
         if epoch % 10 == 0:

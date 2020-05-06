@@ -1,12 +1,11 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
-from hw2 import Transform, Translation, Rotation, Base
-from hw3 import link, Quaternion
+from utils import Transform, link
 
 
 def tensorLink(twist, dist, angle, offset):
-    """ Link made by Tensor """
+    """ Transformation in each link with type Tensor """
     twist = torch.Tensor([twist / 180 * np.pi])
     T1 = torch.Tensor([
         [1, 0, 0, dist],
@@ -75,6 +74,10 @@ def gradientVariable(wanted, linkparam, init_angle=None, iters=500):
 
 
 def forwardVariable(th, linkparam):
+    """
+    Calculate the forward transformation by
+    angle(theta) and it's link parameters.
+    """
     T = Transform()
     i = 0
     for p in linkparam:
@@ -90,7 +93,7 @@ def forwardVariable(th, linkparam):
 
 
 if __name__ == "__main__":
-    linkparam = [(90,   0, 90,  20),
+    linkparam = [(90,   0,   90, 0),
                  ( 0,  20, None, 0),
                  ( 0, 100, None, 0),
                  ( 0, 100, None, 0),

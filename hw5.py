@@ -6,6 +6,7 @@ from pprint import pprint
 sin, cos = np.sin, np.cos
 
 # The arm setting
+"""
 check = True
 linkparam = [[ 0,   0, None, 0],
              [ 0,  30, None, 0],
@@ -18,7 +19,6 @@ M = [0, 0.1, 0.2]
 I = [0, 0, 0]
 C = [[0, 0, 0], [30, 0, 0], [20, 0, 0]]
 
-"""
 check = True
 linkparam = [[ 0,   0, None, 0],
              [ 0,  3.0, None, 0],
@@ -30,7 +30,9 @@ ath = [-12, 20, 0]
 M = [0, 0.3, 0.1]
 I = [0, 0, 0]
 C = [[0, 0, 0], [3, 0, 0], [4, 0, 0]]
+"""
 
+# HW5 Q1 Q2
 check = False
 linkparam = [[ 0,    0, None, 0],
              [ 0,  0.5, None, 0],
@@ -43,10 +45,29 @@ ath = [0.5, 1, 1.5, 0]
 M = [0, 4.6, 2.3, 1]
 I = [0, 0, 0, [[0.5, 0, 0], [0, 0.1, 0], [0, 0, 0.1]]]
 C = [[0, 0, 0], [0.5, 0, 0], [0.5, 0, 0], [0, 0, 0]]
+
+"""
+check = False
+linkparam = [[ 0,    0, None, 0],
+             [ 0,    4, None, 0],
+             [ 0,    3, None, 0],
+             [ 0,    2,    0, 0]]
+g = 9.8
+th  = [ 10, 20,  30, 0]
+vth = [  1,  2,   3, 0]
+ath = [0.5,  1, 1.5, 0]
+M = [0, 20, 15, 10]
+I = [0, [[0, 0, 0], [0, 0, 0], [0, 0, 0.5]], [[0, 0, 0], [0, 0, 0], [0, 0, 0.2]], [[0, 0, 0], [0, 0, 0], [0, 0, 0.1]], 0]
+C = [[0, 0, 0], [2, 0, 0], [1.5, 0, 0], [1, 0, 0]]
 """
 
+vth = np.array(vth) / np.pi * 180
+ath = np.array(ath) / np.pi * 180
+
+
 # Result
-Trans = [Transform()]
+Ts0 = [Transform()]
+Ts = [Transform()]
 v = [vTranslate()]
 a = [vTranslate(v=Translation(0, g, 0))]
 xy = [Translation()]
@@ -63,10 +84,11 @@ for i in range(len(linkparam)):
 
     # transform matrix for angle
     T = link(*linkparam[i])
-    Trans.append(Trans[-1] * T)
+    Ts.append(T)
+    Ts0.append(Ts0[-1] * T)
 
     # Space location i+1
-    xy.append(Trans[-1] * Translation())
+    xy.append(Ts0[-1] * Translation())
 
     # transform matrix for velcoity
     T_v = vTransform(Rotation(mat=T.rot.mat.T), T.loc)
@@ -104,14 +126,14 @@ for i in range(1, len(linkparam)):
 
 
 for i in reversed(range(len(linkparam))):
-    # force on motor
-    T = Trans[i + 1]
-    f[i] = F[i] + T.rot * f[i + 1]
+    T = Ts[i + 1]
+    now_F = F[i]
+    f[i] = now_F + T.rot * f[i + 1]
 
     # torque on motor
     center = C[i]
-    n[i] = N[i] + T.rot * n[i + 1] + Translation(mat=np.cross(center, F[i].mat) + \
-           np.cross(T.loc.mat, (T.rot * f[i + 1]).mat))
+    n[i] = N[i] + T.rot * n[i + 1] + Translation(mat=np.cross(center, now_F.mat) + \
+                                                     np.cross(T.loc.mat, (T.rot * f[i + 1]).mat))
 
 # remove last one
 f = f[:-1]
@@ -130,7 +152,38 @@ print("N",   *N, sep="\n")
 print("f",   *f, sep="\n")
 print("n",   *n, sep="\n")
 
-# check
+# test in utils
+from utils import ArmDynamic
+arms = ArmDynamic(linkparam)
+arms.addGravity(1, g)  # on y
+arms.M = M
+arms.I = I
+arms.C = C
+
+# utils run
+th  = [10, 20, 30, 0]
+vth = [1, 2, 3, 0]
+ath = [0.5, 1, 1.5, 0]
+vth = np.array(vth) / np.pi * 180
+ath = np.array(ath) / np.pi * 180
+arms.run(th, vth, ath)
+
+# utils check
+th = np.array(th) / 180 * np.pi
+vth = np.array(vth) / 180 * np.pi
+ath = np.array(ath) / 180 * np.pi
+print("Check the function in Utils")
+print("th", th, vth, ath, sep="\n")
+print("xy", *arms.xy,     sep="\n")
+print("v",  *arms.v,      sep="\n")
+print("a",  *arms.a,      sep="\n")
+print("ac", *arms.ac,     sep="\n")
+print("F",  *arms.F,      sep="\n")
+print("N",  *arms.N,      sep="\n")
+print("f",  *arms.f,      sep="\n")
+print("n",  *arms.n,      sep="\n")
+
+# check answer
 if not check:
     exit()
 print("a1x", g * sin(th[0]))
@@ -152,3 +205,4 @@ print("n1", M[2] * l[1] ** 2 * ath.sum() + \
             (M[1] + M[2]) * (l[0] ** 2 * ath[0] + l[0] * g * cos(th[0])) + \
             M[2] * l[1] * g * cos(th.sum())
 )
+

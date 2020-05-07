@@ -1,12 +1,13 @@
 import numpy as np
 
 np.set_printoptions(3, suppress=True)
+sin, cos = np.sin, np.cos
 
 
 class Base:
     def __init__(self, n=3, mat=None):
         if mat is not None:
-            self.mat = np.array(mat)
+            self.mat = np.array(mat, dtype=np.float)
             return
         self.mat = np.identity(n)
 
@@ -223,6 +224,88 @@ def vTransform(rot, p_rel=Translation()):
         np.hstack([rot.mat, -rot.mat.dot(s)]),
         np.hstack([np.zeros([3, 3]), rot.mat])])
     return Transform(mat=mat)
+
+
+class ArmDynamic:
+    def __init__(self, linkparam):
+        self.linkparam = linkparam
+        self.Ts0 = [Transform()]
+        self.Ts = [Transform()]
+        self.v = [vTranslate()]
+        self.a = [vTranslate()]
+        self.xy = [Translation()]
+        self.ac = [Translation()]
+        self.F = [Translation()]
+        self.N = [Translation()]
+        self.f = [Translation()] * (len(linkparam) + 1)
+        self.n = [Translation()] * (len(linkparam) + 1)
+
+    def addGravity(self, axis=2, g=9.8):
+        self.a[0].mat[axis] = g
+
+    def run(self, th, vth, ath):
+        # joint
+        for i in range(len(self.linkparam)):
+            # set angle of joint
+            self.linkparam[i][2] = th[i]
+
+            # transform matrix for angle
+            T = link(*self.linkparam[i])
+            self.Ts.append(T)
+            self.Ts0.append(self.Ts0[-1] * T)
+
+            # Space location i+1
+            self.xy.append(self.Ts0[-1] * Translation())
+
+            # transform matrix for velcoity
+            T_v = vTransform(Rotation(mat=T.rot.mat.T), T.loc)
+
+            # velcoity i+1 (R-joint)
+            new_v = T_v * self.v[i]
+            new_v.mat[5] += vth[i] / 180 * np.pi
+            self.v.append(new_v)
+
+            # acceleration i+1 (R-joint)
+            new_a = T_v * self.a[i]
+            w = self.v[i].mat[3:6]
+            new_a.mat[5] += ath[i] / 180 * np.pi
+            new_a.mat[0:3] += T.rot.mat.T.dot(np.cross(w, np.cross(w, T.loc.mat)))
+            new_a.mat[3:6] += T.rot.mat.T.dot(np.cross(w, [0, 0, vth[i] / 180 * np.pi]))
+            self.a.append(new_a)
+
+        # link
+        for i in range(1, len(self.linkparam)):
+            # acceleration i+1 on center(Center located at i+1)
+            center = self.C[i]
+            new_w = self.v[i].mat[3:6]
+            new_a = self.a[i]
+            new_ac = new_a.mat[0:3] + np.cross(new_w, np.cross(new_w, center)) + np.cross(new_a.mat[3:6], center)
+            self.ac.append(new_ac)
+
+            # force i+1 on center
+            self.F.append(Translation(mat=new_ac * self.M[i]))
+
+            # Torque i+1 on center
+            now_I = np.array(self.I[i])
+            self.N.append(Translation(mat=now_I.dot(new_a.mat[3:6]) + \
+                                                    np.cross(new_w, now_I.dot(new_w))))
+
+
+        for i in reversed(range(len(self.linkparam))):
+            T = self.Ts[i + 1]
+            now_F = self.F[i]
+            self.f[i] = now_F + T.rot * self.f[i + 1]
+
+            # torque on motor
+            center = self.C[i]
+            self.n[i] = self.N[i] + T.rot * self.n[i + 1] + Translation(mat=np.cross(center, now_F.mat) + \
+                                                                            np.cross(T.loc.mat, (T.rot * self.f[i + 1]).mat))
+
+        # remove last one
+        self.f = self.f[:-1]
+        self.n = self.n[:-1]
+
+        return self.f, self.n
 
 
 if __name__ == "__main__":

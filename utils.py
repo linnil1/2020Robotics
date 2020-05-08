@@ -102,7 +102,7 @@ class Transform(Base):
         self.rot = rot
         self.mat[0:3, 0:3] = rot.mat
         self.loc = loc
-        self.mat[0:3, 3] = loc.mat.reshape(self.mat[0:3 ,0].shape)
+        self.mat[0:3, 3] = loc.mat.reshape(self.mat[0:3, 0].shape)
 
     def T(self):
         """ Inverse """
@@ -148,9 +148,9 @@ class Quaternion(Base):
         r = rot.mat
         angle = np.arccos((np.trace(r) - 1) / 2)
         raxis = 1 / 2 / np.sin(angle) * np.array([
-            r[2,1] - r[1,2],
-            r[0,2] - r[2,0],
-            r[1,0] - r[0,1]])
+            r[2, 1] - r[1, 2],
+            r[0, 2] - r[2, 0],
+            r[1, 0] - r[0, 1]])
         return cls.setRotation(angle / np.pi * 180, raxis)
 
     def getRotationParam(self):
@@ -227,8 +227,16 @@ def vTransform(rot, p_rel=Translation()):
 
 
 class ArmDynamic:
+    """
+    Run forward dynamic of the arm
+    """
     def __init__(self, linkparam):
+        """ init DH parameters """
         self.linkparam = linkparam
+        self.clean()
+
+    def clean(self):
+        """ init data """
         self.Ts0 = [Transform()]
         self.Ts = [Transform()]
         self.v = [vTranslate()]
@@ -237,15 +245,21 @@ class ArmDynamic:
         self.ac = [Translation()]
         self.F = [Translation()]
         self.N = [Translation()]
-        self.f = [Translation()] * (len(linkparam) + 1)
-        self.n = [Translation()] * (len(linkparam) + 1)
+        self.f = [Translation()] * (len(self.linkparam) + 1)
+        self.n = [Translation()] * (len(self.linkparam) + 1)
 
     def addGravity(self, axis=2, g=9.8):
+        """ Add gravity on joint 0 """
         self.a[0].mat[axis] = g
 
     def run(self, th, vth, ath):
+        """ Run """
+        # check input
+        N = len(self.linkparam)
+        assert(N == len(self.M) == len(self.I) == len(self.C))
+
         # joint
-        for i in range(len(self.linkparam)):
+        for i in range(N):
             # set angle of joint
             self.linkparam[i][2] = th[i]
 
@@ -274,12 +288,13 @@ class ArmDynamic:
             self.a.append(new_a)
 
         # link
-        for i in range(1, len(self.linkparam)):
+        for i in range(1, N):
             # acceleration i+1 on center(Center located at i+1)
             center = self.C[i]
             new_w = self.v[i].mat[3:6]
             new_a = self.a[i]
-            new_ac = new_a.mat[0:3] + np.cross(new_w, np.cross(new_w, center)) + np.cross(new_a.mat[3:6], center)
+            new_ac = new_a.mat[0:3] + np.cross(new_w, np.cross(new_w, center)) + \
+                    np.cross(new_a.mat[3:6], center)
             self.ac.append(new_ac)
 
             # force i+1 on center
@@ -287,19 +302,19 @@ class ArmDynamic:
 
             # Torque i+1 on center
             now_I = np.array(self.I[i])
-            self.N.append(Translation(mat=now_I.dot(new_a.mat[3:6]) + \
+            self.N.append(Translation(mat=now_I.dot(new_a.mat[3:6]) +
                                                     np.cross(new_w, now_I.dot(new_w))))
 
-
-        for i in reversed(range(len(self.linkparam))):
+        for i in reversed(range(N)):
             T = self.Ts[i + 1]
             now_F = self.F[i]
             self.f[i] = now_F + T.rot * self.f[i + 1]
 
             # torque on motor
             center = self.C[i]
-            self.n[i] = self.N[i] + T.rot * self.n[i + 1] + Translation(mat=np.cross(center, now_F.mat) + \
-                                                                            np.cross(T.loc.mat, (T.rot * self.f[i + 1]).mat))
+            self.n[i] = self.N[i] + T.rot * self.n[i + 1] + \
+                    Translation(mat=np.cross(center, now_F.mat) +
+                                    np.cross(T.loc.mat, (T.rot * self.f[i + 1]).mat))
 
         # remove last one
         self.f = self.f[:-1]
